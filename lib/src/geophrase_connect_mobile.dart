@@ -8,7 +8,6 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:http/http.dart' as http;
 import 'geophrase_types.dart';
 
-// 2. The Core Widget
 class GeophraseConnect extends StatefulWidget {
   final String apiKey;
   final String? orderId;
@@ -34,21 +33,41 @@ class GeophraseConnect extends StatefulWidget {
 class _GeophraseConnectState extends State<GeophraseConnect> {
   late final WebViewController _controller;
   StreamSubscription<Position>? _positionStreamSubscription;
+  bool _isLoading = true;
   static const String _apiBase = 'https://api.geophrase.com';
+  static const String _widgetOrigin = 'https://connect.geophrase.com';
 
   @override
   void initState() {
     super.initState();
 
-    // Build the Target URL
-    String url = 'https://connect.geophrase.com?api-key=${widget.apiKey}&platform=mobile';
-    if (widget.orderId != null) url += '&order-id=${widget.orderId}';
-    if (widget.phone != null) url += '&phone=${widget.phone}';
+    // 1. Build the Target URL with strict encoding
+    String url = '$_widgetOrigin?api-key=${Uri.encodeComponent(widget.apiKey)}&platform=mobile';
+    if (widget.orderId != null) url += '&order-id=${Uri.encodeComponent(widget.orderId!)}';
+    if (widget.phone != null) url += '&phone=${Uri.encodeComponent(widget.phone!)}';
 
-    // Initialize the WebView Engine
+    // 2. Initialize the WebView Engine with Security and Loading States
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(Colors.transparent)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onNavigationRequest: (request) {
+            try {
+              final uri = Uri.parse(request.url);
+              if (uri.origin == _widgetOrigin) {
+                return NavigationDecision.navigate;
+              }
+            } catch (_) {}
+            return NavigationDecision.prevent; // Block hijacked redirects
+          },
+          onPageFinished: (_) {
+            if (mounted) {
+              setState(() => _isLoading = false);
+            }
+          },
+        ),
+      )
       ..addJavaScriptChannel(
         'GeophraseFlutter',
         onMessageReceived: _handleWebMessage,
@@ -56,38 +75,35 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
       ..loadRequest(Uri.parse(url));
   }
 
-  // 3. The Message Handler
   void _handleWebMessage(JavaScriptMessage message) {
     try {
       final data = jsonDecode(message.message);
       final type = data['type'];
 
       if (type == 'GEOPHRASE_CLOSE_WIDGET') {
+        _positionStreamSubscription?.cancel(); // Kill GPS on close
         widget.onClose?.call();
       } else if (type == 'GEOPHRASE_REQUEST_LOCATION') {
         _handleLocationRequest();
       } else if (type == 'GEOPHRASE_RESOLUTION_TOKEN') {
-        widget.onClose?.call(); // Hide the modal during resolution
+        _positionStreamSubscription?.cancel(); // Kill GPS on resolution
+        widget.onClose?.call();
         _handleTokenResolution(data['token']);
       }
     } catch (e) {
-      // Ignore random non-JSON messages
       debugPrint('Geophrase non-JSON message ignored.');
     }
   }
 
-  // Helper to send data BACK to the Next.js widget
   void _injectMessageToWeb(Map<String, dynamic> data) {
     final script = "window.postMessage(${jsonEncode(data)}, '*'); true;";
     _controller.runJavaScript(script);
   }
 
-  // 4. Handle GPS Native Permissions and Progressive Coordinates
   Future<void> _handleLocationRequest() async {
     bool serviceEnabled;
     LocationPermission permission;
 
-    // Test if location services are enabled
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       _injectMessageToWeb({'type': 'GEOPHRASE_LOCATION_DENIED'});
@@ -108,22 +124,18 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
       return;
     }
 
-    // Permissions are granted, start watching the position
     const LocationSettings locationSettings = LocationSettings(
       accuracy: LocationAccuracy.high,
       distanceFilter: 10,
       timeLimit: Duration(seconds: 30),
     );
 
-    // Mimic navigator.geolocation.clearWatch() before starting a new one
     _positionStreamSubscription?.cancel();
 
-    // Mimic navigator.geolocation.watchPosition()
     _positionStreamSubscription = Geolocator.getPositionStream(
       locationSettings: locationSettings,
     ).listen(
           (Position position) {
-        // Continuously send updates; Next.js will ignore them if userHasInteracted == true
         _injectMessageToWeb({
           'type': 'GEOPHRASE_LOCATION_RESULT',
           'lat': position.latitude,
@@ -136,7 +148,6 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
     );
   }
 
-  // 5. Resolve Token with Native Headers
   Future<void> _handleTokenResolution(String token) async {
     try {
       PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -153,11 +164,12 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
         headers['X-Android-Package'] = bundleId;
       }
 
+      // 3. Implemented the 15-second timeout constraint
       final response = await http.post(
         Uri.parse('$_apiBase/business/resolve/'),
         headers: headers,
         body: jsonEncode({'token': token}),
-      );
+      ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
         Map<String, dynamic> errorData = {};
@@ -179,6 +191,11 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
         rawData: responseData,
       ));
 
+    } on TimeoutException {
+      widget.onError?.call(GeophraseError(
+        type: 'NETWORK_ERROR',
+        message: 'Geophrase API request timed out',
+      ));
     } catch (error) {
       widget.onError?.call(GeophraseError(
         type: 'NETWORK_ERROR',
@@ -189,19 +206,25 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
 
   @override
   void dispose() {
-    // Mimic the useEffect cleanup
     _positionStreamSubscription?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Render the View
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        bottom: false, // Lets the map stretch to the bottom edge
-        child: WebViewWidget(controller: _controller),
+        bottom: false,
+        child: Stack(
+          children: [
+            WebViewWidget(controller: _controller),
+            if (_isLoading)
+              const Center(
+                child: CircularProgressIndicator(color: Colors.black),
+              ),
+          ],
+        ),
       ),
     );
   }

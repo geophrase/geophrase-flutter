@@ -1,7 +1,8 @@
 // ignore_for_file: avoid_web_libraries_in_flutter
 import 'dart:async';
 import 'dart:convert';
-import 'dart:html' as html;
+import 'dart:js_interop';
+import 'package:web/web.dart' as web;
 import 'dart:ui_web' as ui_web;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -31,49 +32,53 @@ class GeophraseConnect extends StatefulWidget {
 
 class _GeophraseConnectState extends State<GeophraseConnect> {
   late String _viewType;
-  late html.IFrameElement _iframeElement;
-  StreamSubscription<html.MessageEvent>? _messageSubscription;
+  late web.HTMLIFrameElement _iframeElement; // Updated to web.HTMLIFrameElement
+  StreamSubscription<web.MessageEvent>? _messageSubscription; // Updated to web.MessageEvent
   static const String _apiBase = 'https://api.geophrase.com';
+  static const String _widgetOrigin = 'https://connect.geophrase.com';
 
   @override
   void initState() {
     super.initState();
 
-    String url = 'https://connect.geophrase.com?api-key=${widget.apiKey}';
-    if (widget.orderId != null) url += '&order-id=${widget.orderId}';
-    if (widget.phone != null) url += '&phone=${widget.phone}';
+    String url = '$_widgetOrigin?api-key=${Uri.encodeComponent(widget.apiKey)}';
+    if (widget.orderId != null) url += '&order-id=${Uri.encodeComponent(widget.orderId!)}';
+    if (widget.phone != null) url += '&phone=${Uri.encodeComponent(widget.phone!)}';
 
-    // 1. Create a unique ID for the iframe
     _viewType = 'geophrase-iframe-${DateTime.now().millisecondsSinceEpoch}';
 
-    // 2. Build the HTML Iframe directly
-    _iframeElement = html.IFrameElement()
+    // Build the iframe using the modern web package
+    _iframeElement = web.HTMLIFrameElement()
       ..src = url
       ..style.border = 'none'
       ..style.width = '100%'
       ..style.height = '100%'
-      ..allow = 'geolocation'; // CRITICAL: Lets Next.js ask for GPS directly!
+      ..allow = 'geolocation';
 
-    // 3. Register the iframe with Flutter's Web Engine
     ui_web.platformViewRegistry.registerViewFactory(
       _viewType,
           (int viewId) => _iframeElement,
     );
 
-    // 4. Listen to standard window.postMessage events
-    _messageSubscription = html.window.onMessage.listen(_handleWebMessage);
+    // Listen to standard window.postMessage events using package:web
+    _messageSubscription = web.window.onMessage.listen(_handleWebMessage);
   }
 
-  void _handleWebMessage(html.MessageEvent event) {
+  void _handleWebMessage(web.MessageEvent event) {
+    if (event.origin != _widgetOrigin) return;
+
     try {
-      // Data might be passed as a Map or a String depending on the browser
-      final dynamic rawData = event.data;
+      // CRITICAL UPDATE: Convert JS interop object to Dart types using dartify()
+      final dynamic rawData = event.data.dartify();
       Map<String, dynamic> data;
 
       if (rawData is String) {
         data = jsonDecode(rawData);
-      } else {
+      } else if (rawData is Map) {
+        // Automatically handled if dartify() resolves a JS Object into a Dart Map
         data = Map<String, dynamic>.from(rawData);
+      } else {
+        return;
       }
 
       final type = data['type'];
@@ -84,8 +89,6 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
         widget.onClose?.call();
         _handleTokenResolution(data['token']);
       }
-      // Note: We ignore GEOPHRASE_REQUEST_LOCATION because Next.js
-      // handles the navigator.geolocation API directly on the web!
     } catch (e) {
       // Ignore random browser extension messages
     }
@@ -100,7 +103,7 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
           "Content-Type": "application/json",
         },
         body: jsonEncode({'token': token}),
-      );
+      ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
         Map<String, dynamic> errorData = {};
@@ -122,6 +125,11 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
         rawData: responseData,
       ));
 
+    } on TimeoutException {
+      widget.onError?.call(GeophraseError(
+        type: 'NETWORK_ERROR',
+        message: 'Geophrase API request timed out',
+      ));
     } catch (error) {
       widget.onError?.call(GeophraseError(
         type: 'NETWORK_ERROR',

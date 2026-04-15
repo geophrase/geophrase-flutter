@@ -1,12 +1,17 @@
 # Geophrase Flutter SDK
 
+![pub package](https://img.shields.io/pub/v/geophrase_flutter)
+
 The official Flutter SDK for Geophrase Connect. A drop-in UI widget that utilizes specialized software logic to parse and optimize unstructured regional addresses.
 
-## Features
+## 🧠 How It Works
 
-* **Backend-less Integration:** Resolve complete, structured addresses directly on the client.
-* **Native GPS Handling:** Automatically prompts users for location permissions to verify coordinates via the mobile device.
-* **Drop-in UI:** An optimized WebView flow that bridges native hardware with the Geophrase widget.
+1. You open the Geophrase widget in your app.
+2. The user selects their precise location on the map.
+3. The SDK resolves it into a structured address via Geophrase APIs securely.
+4. You receive the final address object in the `onSuccess` callback.
+
+**No backend integration required.**
 
 ## Setup Requirements
 
@@ -61,6 +66,47 @@ class AddressPickerScreen extends StatelessWidget {
   }
 }
 ```
+
+## 📦 Data Structures
+
+### Example Success Response (`onSuccess`)
+The SDK returns a `GeophraseAddress` object containing the unique phrase and the raw geographic data.
+
+```json
+{
+  "phrase": "blue-tiger-lake",
+  "rawData": {
+    "addressLine1": "House No 12, GS Road",
+    "city": "Guwahati",
+    "state": "Assam",
+    "postalCode": "781005",
+    "latitude": 26.1445,
+    "longitude": 91.7362
+  }
+}
+```
+
+### Example Error Response (`onError`)
+If a network issue or validation failure occurs, the SDK returns a `GeophraseError` object.
+
+```json
+{
+  "type": "API_ERROR", 
+  "message": "Geophrase API error (401)",
+  "status": 401
+}
+```
+
+## ⚠️ Common Issues
+
+**Location not working or timing out?**
+- Ensure location permissions are added to your `Info.plist` and `AndroidManifest.xml`.
+- Make sure physical location services are enabled on the test device.
+- *Note: For accurate GPS testing, use a real physical device instead of a simulator/emulator.*
+
+**WebView not loading?**
+- Check your internet connection.
+- Ensure your iOS deployment target is modern enough to support `webview_flutter`.
 
 ## Additional Information
 
