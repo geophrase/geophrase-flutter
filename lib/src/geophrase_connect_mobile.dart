@@ -111,6 +111,7 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
     // Permissions are granted, start watching the position
     const LocationSettings locationSettings = LocationSettings(
       accuracy: LocationAccuracy.high,
+      distanceFilter: 10,
       timeLimit: Duration(seconds: 30),
     );
 
