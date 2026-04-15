@@ -1,7 +1,7 @@
 name: geophrase_flutter
-description: "A new Flutter package project."
+description: "The Flutter SDK for Geophrase Connect."
 version: 0.0.1
-homepage:
+homepage: "https://business.geophrase.com/docs"
 
 environment:
   sdk: ^3.8.1
@@ -10,6 +10,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  webview_flutter: ^4.8.0
+  geolocator: ^11.0.0
+  package_info_plus: ^8.0.0
+  http: ^1.2.0
 
 dev_dependencies:
   flutter_test:
