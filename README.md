@@ -1,39 +1,67 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# Geophrase Flutter SDK
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages).
-
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages).
--->
-
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+The official Flutter SDK for Geophrase Connect. A drop-in UI widget that utilizes specialized software logic to parse and optimize unstructured regional addresses.
 
 ## Features
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+* **Backend-less Integration:** Resolve complete, structured addresses directly on the client.
+* **Native GPS Handling:** Automatically prompts users for location permissions to verify coordinates via the mobile device.
+* **Drop-in UI:** An optimized WebView flow that bridges native hardware with the Geophrase widget.
 
-## Getting started
+## Setup Requirements
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+Because this SDK requests native GPS coordinates, you **must** declare location permissions in your host application's native configuration files. Failing to do this will cause the operating system to block the widget's location features.
+
+### iOS
+Add this key-value pair to your `ios/Runner/Info.plist`:
+
+```xml
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>We need your location to accurately verify your delivery address.</string>
+```
+
+### Android
+Add this permission to your `android/app/src/main/AndroidManifest.xml` (within the `<manifest>` tag):
+
+```xml
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+```
 
 ## Usage
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
+Integrating the Geophrase widget into your checkout or profile flow is straightforward:
 
 ```dart
-const like = 'sample';
+import 'package:flutter/material.dart';
+import 'package:geophrase_flutter/geophrase_flutter.dart';
+
+class AddressPickerScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Verify Address')),
+      body: GeophraseConnect(
+        apiKey: 'YOUR_PUBLIC_API_KEY', // Replace with your Geophrase API Key
+        orderId: 'ORDER_123',          // Optional: Track specific orders
+        onSuccess: (GeophraseAddress address) {
+          // Triggered when the address is successfully resolved
+          print('Resolved: ${address.phrase}');
+          print('Metadata: ${address.rawData}');
+        },
+        onError: (GeophraseError error) {
+          // Triggered on API or Network failures
+          print('Error: ${error.message}');
+        },
+        onClose: () {
+          // Triggered when the user exits the widget
+          Navigator.of(context).pop();
+        },
+      ),
+    );
+  }
+}
 ```
 
-## Additional information
+## Additional Information
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+For full documentation and advanced configuration, visit [business.geophrase.com/docs](https://business.geophrase.com/docs). To report issues or request features, please use our [GitHub issue tracker](https://github.com/geophrase/geophrase-flutter/issues).
