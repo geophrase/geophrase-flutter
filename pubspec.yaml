@@ -1,7 +1,9 @@
 name: geophrase_flutter
 description: "The Flutter SDK for Geophrase Connect."
-version: 0.0.1
+version: 1.0.0
 homepage: "https://business.geophrase.com/docs"
+repository: "https://github.com/geophrase/geophrase-flutter"
+issue_tracker: "https://github.com/geophrase/geophrase-flutter/issues"
 
 environment:
   sdk: ^3.8.1
