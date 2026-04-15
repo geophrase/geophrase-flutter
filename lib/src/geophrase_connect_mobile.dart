@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -32,6 +33,7 @@ class GeophraseConnect extends StatefulWidget {
 
 class _GeophraseConnectState extends State<GeophraseConnect> {
   late final WebViewController _controller;
+  StreamSubscription<Position>? _positionStreamSubscription;
   static const String _apiBase = 'https://api.geophrase.com';
 
   @override
@@ -80,7 +82,7 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
     _controller.runJavaScript(script);
   }
 
-  // 4. Handle GPS Native Permissions and Coordinates
+  // 4. Handle GPS Native Permissions and Progressive Coordinates
   Future<void> _handleLocationRequest() async {
     bool serviceEnabled;
     LocationPermission permission;
@@ -106,19 +108,31 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
       return;
     }
 
-    // Permissions are granted, fetch the position
-    try {
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-      _injectMessageToWeb({
-        'type': 'GEOPHRASE_LOCATION_RESULT',
-        'lat': position.latitude,
-        'lng': position.longitude,
-      });
-    } catch (e) {
-      _injectMessageToWeb({'type': 'GEOPHRASE_LOCATION_DENIED'});
-    }
+    // Permissions are granted, start watching the position
+    const LocationSettings locationSettings = LocationSettings(
+      accuracy: LocationAccuracy.high,
+      timeLimit: Duration(seconds: 30),
+    );
+
+    // Mimic navigator.geolocation.clearWatch() before starting a new one
+    _positionStreamSubscription?.cancel();
+
+    // Mimic navigator.geolocation.watchPosition()
+    _positionStreamSubscription = Geolocator.getPositionStream(
+      locationSettings: locationSettings,
+    ).listen(
+          (Position position) {
+        // Continuously send updates; Next.js will ignore them if userHasInteracted == true
+        _injectMessageToWeb({
+          'type': 'GEOPHRASE_LOCATION_RESULT',
+          'lat': position.latitude,
+          'lng': position.longitude,
+        });
+      },
+      onError: (error) {
+        _injectMessageToWeb({'type': 'GEOPHRASE_LOCATION_DENIED'});
+      },
+    );
   }
 
   // 5. Resolve Token with Native Headers
@@ -170,6 +184,13 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
         message: error.toString(),
       ));
     }
+  }
+
+  @override
+  void dispose() {
+    // Mimic the useEffect cleanup
+    _positionStreamSubscription?.cancel();
+    super.dispose();
   }
 
   @override
