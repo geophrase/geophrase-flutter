@@ -1,3 +1,8 @@
+## 1.1.1
+
+* Location bug fix on mobile
+
+
 ## 1.1.0
 
 * Added official Web support using an HTML iframe implementation.
