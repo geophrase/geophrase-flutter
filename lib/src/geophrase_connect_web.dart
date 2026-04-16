@@ -32,8 +32,8 @@ class GeophraseConnect extends StatefulWidget {
 
 class _GeophraseConnectState extends State<GeophraseConnect> {
   late String _viewType;
-  late web.HTMLIFrameElement _iframeElement; // Updated to web.HTMLIFrameElement
-  StreamSubscription<web.MessageEvent>? _messageSubscription; // Updated to web.MessageEvent
+  late web.HTMLIFrameElement _iframeElement;
+  StreamSubscription<web.MessageEvent>? _messageSubscription;
   static const String _apiBase = 'https://api.geophrase.com';
   static const String _widgetOrigin = 'https://connect.geophrase.com';
 
@@ -47,7 +47,6 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
 
     _viewType = 'geophrase-iframe-${DateTime.now().millisecondsSinceEpoch}';
 
-    // Build the iframe using the modern web package
     _iframeElement = web.HTMLIFrameElement()
       ..src = url
       ..style.border = 'none'
@@ -60,7 +59,6 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
           (int viewId) => _iframeElement,
     );
 
-    // Listen to standard window.postMessage events using package:web
     _messageSubscription = web.window.onMessage.listen(_handleWebMessage);
   }
 
@@ -68,14 +66,12 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
     if (event.origin != _widgetOrigin) return;
 
     try {
-      // CRITICAL UPDATE: Convert JS interop object to Dart types using dartify()
       final dynamic rawData = event.data.dartify();
       Map<String, dynamic> data;
 
       if (rawData is String) {
         data = jsonDecode(rawData);
       } else if (rawData is Map) {
-        // Automatically handled if dartify() resolves a JS Object into a Dart Map
         data = Map<String, dynamic>.from(rawData);
       } else {
         return;
@@ -141,6 +137,11 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
   @override
   void dispose() {
     _messageSubscription?.cancel();
+
+    // STRICT FIX: Kill the iframe session completely on teardown
+    // Prevents ghost OTP triggers if the DOM node isn't immediately garbage collected
+    _iframeElement.removeAttribute('src');
+
     super.dispose();
   }
 

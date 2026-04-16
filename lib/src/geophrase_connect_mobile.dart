@@ -41,12 +41,10 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
   void initState() {
     super.initState();
 
-    // 1. Build the Target URL with strict encoding
     String url = '$_widgetOrigin?api-key=${Uri.encodeComponent(widget.apiKey)}&platform=mobile';
     if (widget.orderId != null) url += '&order-id=${Uri.encodeComponent(widget.orderId!)}';
     if (widget.phone != null) url += '&phone=${Uri.encodeComponent(widget.phone!)}';
 
-    // 2. Initialize the WebView Engine with Security and Loading States
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(Colors.transparent)
@@ -54,12 +52,16 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
         NavigationDelegate(
           onNavigationRequest: (request) {
             try {
+              // Allow blank requests for teardown
+              if (request.url == 'about:blank') {
+                return NavigationDecision.navigate;
+              }
               final uri = Uri.parse(request.url);
               if (uri.origin == _widgetOrigin) {
                 return NavigationDecision.navigate;
               }
             } catch (_) {}
-            return NavigationDecision.prevent; // Block hijacked redirects
+            return NavigationDecision.prevent;
           },
           onPageFinished: (_) {
             if (mounted) {
@@ -81,12 +83,12 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
       final type = data['type'];
 
       if (type == 'GEOPHRASE_CLOSE_WIDGET') {
-        _positionStreamSubscription?.cancel(); // Kill GPS on close
+        _positionStreamSubscription?.cancel();
         widget.onClose?.call();
       } else if (type == 'GEOPHRASE_REQUEST_LOCATION') {
         _handleLocationRequest();
       } else if (type == 'GEOPHRASE_RESOLUTION_TOKEN') {
-        _positionStreamSubscription?.cancel(); // Kill GPS on resolution
+        _positionStreamSubscription?.cancel();
         widget.onClose?.call();
         _handleTokenResolution(data['token']);
       }
@@ -164,7 +166,6 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
         headers['X-Android-Package'] = bundleId;
       }
 
-      // 3. Implemented the 15-second timeout constraint
       final response = await http.post(
         Uri.parse('$_apiBase/business/resolve/'),
         headers: headers,
@@ -207,6 +208,11 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
   @override
   void dispose() {
     _positionStreamSubscription?.cancel();
+
+    // STRICT FIX: Blank out the webview to terminate any active network sessions
+    // or background processing instantly upon route closure.
+    _controller.loadRequest(Uri.parse('about:blank'));
+
     super.dispose();
   }
 
