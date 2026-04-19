@@ -45,20 +45,28 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
   void initState() {
     super.initState();
 
+    // 1. Strict Validation
     if (!['client', 'server'].contains(widget.mode)) {
-      debugPrint("Geophrase Error: Invalid mode '${widget.mode}'. Expected 'client' or 'server'.");
+      throw ArgumentError("Geophrase Error: Invalid mode '${widget.mode}'. Expected 'client' or 'server'.");
     }
-    if (widget.mode == 'client' && widget.apiKey == null) {
+    if (widget.mode == 'client' && (widget.apiKey == null || widget.apiKey!.isEmpty)) {
       throw ArgumentError("Geophrase Error: 'apiKey' is required when mode is 'client'.");
     }
-    if (widget.mode == 'server' && widget.apiKey != null) {
+    if (widget.mode == 'server' && widget.apiKey != null && widget.apiKey!.isNotEmpty) {
       debugPrint("Geophrase Warning: 'apiKey' is ignored when mode is 'server'. Ensure you are not exposing a secure key in your frontend.");
     }
 
+    String safeTheme = widget.theme;
+    if (!['light', 'dark', 'system'].contains(widget.theme)) {
+      debugPrint("Geophrase Warning: Invalid theme '${widget.theme}'. Falling back to 'system'.");
+      safeTheme = 'system';
+    }
+
+    // 2. Build Secure URL
     String url = '$_widgetOrigin?platform=mobile';
     if (widget.orderId != null) url += '&order-id=${Uri.encodeComponent(widget.orderId!)}';
     if (widget.phone != null) url += '&phone=${Uri.encodeComponent(widget.phone!)}';
-    url += '&theme=${Uri.encodeComponent(widget.theme)}';
+    url += '&theme=${Uri.encodeComponent(safeTheme)}';
 
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
