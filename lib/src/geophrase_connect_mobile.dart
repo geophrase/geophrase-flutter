@@ -9,16 +9,20 @@ import 'package:http/http.dart' as http;
 import 'geophrase_types.dart';
 
 class GeophraseConnect extends StatefulWidget {
-  final String apiKey;
+  final String mode;
+  final String theme;
+  final String? apiKey;
   final String? orderId;
   final String? phone;
-  final Function(GeophraseAddress) onSuccess;
+  final Function(dynamic) onSuccess;
   final Function(GeophraseError)? onError;
   final VoidCallback? onClose;
 
   const GeophraseConnect({
     Key? key,
-    required this.apiKey,
+    this.mode = 'client',
+    this.theme = 'system',
+    this.apiKey,
     required this.onSuccess,
     this.orderId,
     this.phone,
@@ -41,9 +45,20 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
   void initState() {
     super.initState();
 
-    String url = '$_widgetOrigin?api-key=${Uri.encodeComponent(widget.apiKey)}&platform=mobile';
+    if (!['client', 'server'].contains(widget.mode)) {
+      debugPrint("Geophrase Error: Invalid mode '${widget.mode}'. Expected 'client' or 'server'.");
+    }
+    if (widget.mode == 'client' && widget.apiKey == null) {
+      throw ArgumentError("Geophrase Error: 'apiKey' is required when mode is 'client'.");
+    }
+    if (widget.mode == 'server' && widget.apiKey != null) {
+      debugPrint("Geophrase Warning: 'apiKey' is ignored when mode is 'server'. Ensure you are not exposing a secure key in your frontend.");
+    }
+
+    String url = '$_widgetOrigin?platform=mobile';
     if (widget.orderId != null) url += '&order-id=${Uri.encodeComponent(widget.orderId!)}';
     if (widget.phone != null) url += '&phone=${Uri.encodeComponent(widget.phone!)}';
+    url += '&theme=${Uri.encodeComponent(widget.theme)}';
 
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
@@ -52,21 +67,14 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
         NavigationDelegate(
           onNavigationRequest: (request) {
             try {
-              // Allow blank requests for teardown
-              if (request.url == 'about:blank') {
-                return NavigationDecision.navigate;
-              }
+              if (request.url == 'about:blank') return NavigationDecision.navigate;
               final uri = Uri.parse(request.url);
-              if (uri.origin == _widgetOrigin) {
-                return NavigationDecision.navigate;
-              }
+              if (uri.origin == _widgetOrigin) return NavigationDecision.navigate;
             } catch (_) {}
             return NavigationDecision.prevent;
           },
           onPageFinished: (_) {
-            if (mounted) {
-              setState(() => _isLoading = false);
-            }
+            if (mounted) setState(() => _isLoading = false);
           },
         ),
       )
@@ -90,7 +98,12 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
       } else if (type == 'GEOPHRASE_RESOLUTION_TOKEN') {
         _positionStreamSubscription?.cancel();
         widget.onClose?.call();
-        _handleTokenResolution(data['token']);
+
+        if (widget.mode == 'server') {
+          widget.onSuccess(GeophraseToken(token: data['token']));
+        } else {
+          _handleTokenResolution(data['token']);
+        }
       }
     } catch (e) {
       debugPrint('Geophrase non-JSON message ignored.');
@@ -151,12 +164,13 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
   }
 
   Future<void> _handleTokenResolution(String token) async {
+    final activeApiKey = widget.apiKey ?? '';
     try {
       PackageInfo packageInfo = await PackageInfo.fromPlatform();
       String bundleId = packageInfo.packageName;
 
       Map<String, String> headers = {
-        "X-API-Key": widget.apiKey,
+        "X-API-Key": activeApiKey,
         "Content-Type": "application/json"
       };
 
@@ -208,26 +222,26 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
   @override
   void dispose() {
     _positionStreamSubscription?.cancel();
-
-    // STRICT FIX: Blank out the webview to terminate any active network sessions
-    // or background processing instantly upon route closure.
     _controller.loadRequest(Uri.parse('about:blank'));
-
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    Color bgColor = widget.theme == 'dark' ? const Color(0xFF121212) : Colors.white;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: bgColor,
       body: SafeArea(
         bottom: false,
         child: Stack(
           children: [
             WebViewWidget(controller: _controller),
             if (_isLoading)
-              const Center(
-                child: CircularProgressIndicator(color: Colors.black),
+              Center(
+                child: CircularProgressIndicator(
+                    color: widget.theme == 'dark' ? Colors.white : Colors.black
+                ),
               ),
           ],
         ),

@@ -4,6 +4,11 @@ class GeophraseAddress {
   GeophraseAddress({required this.phrase, required this.rawData});
 }
 
+class GeophraseToken {
+  final String token;
+  GeophraseToken({required this.token});
+}
+
 class GeophraseError {
   final String type;
   final String message;
