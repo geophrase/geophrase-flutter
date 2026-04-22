@@ -1,132 +1,160 @@
-# Geophrase Flutter SDK
+# geophrase_flutter
 
 ![pub package](https://img.shields.io/pub/v/geophrase_flutter)
+![license](https://img.shields.io/pub/l/geophrase_flutter)
 
-The official Flutter SDK for Geophrase Connect. A drop-in UI widget that utilizes specialized software logic to parse and optimize unstructured regional addresses.
+Drop-in address selector for Flutter apps serving Indian customers. Captures perfectly structured addresses and GPS coordinates to reduce Return to Origin (RTO) costs.
 
-## 🧠 How It Works
+📖 **[Full documentation and integration guide](https://business.geophrase.com/docs)**
 
-1. You open the Geophrase widget in your app.
-2. The user selects their precise location on the map.
-3. The SDK resolves the token securely.
-4. You receive the final address object in the `onSuccess` callback.
+*Also building for web or React Native? See [`@geophrase/core`](https://www.npmjs.com/package/@geophrase/core), [`@geophrase/react`](https://www.npmjs.com/package/@geophrase/react), and [`@geophrase/react-native`](https://www.npmjs.com/package/@geophrase/react-native).*
 
 ---
 
-## Setup Requirements
+## Install
 
-Because this SDK requests native GPS coordinates, you **must** declare location permissions in your host application's native configuration files. Failing to do this will cause the operating system to block the widget's location features.
+```bash
+flutter pub add geophrase_flutter
+```
 
 ### iOS
-Add this key-value pair to your `ios/Runner/Info.plist`:
-~~~xml
+
+Add to `ios/Runner/Info.plist`:
+
+```xml
 <key>NSLocationWhenInUseUsageDescription</key>
-<string>We need your location to accurately verify your delivery address.</string>
-~~~
+<string>We need your location to accurately place the delivery pin.</string>
+```
 
 ### Android
-Add this permission to your `android/app/src/main/AndroidManifest.xml` (within the `<manifest>` tag):
-~~~xml
+
+Add to `android/app/src/main/AndroidManifest.xml` (inside `<manifest>`):
+
+```xml
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-~~~
+```
+
+### Web
+
+No extra configuration needed — the widget is rendered in a sandboxed iframe with `allow="geolocation"`.
 
 ---
 
-## Usage
+## Quick Start
 
-Integrating the Geophrase widget into your checkout or profile flow is straightforward:
+The snippet below uses `mode: 'server'` so you can drop it into your app and see the widget **without creating an API key first**. Switching to client mode is a two-line change — see the inline comment.
 
-~~~dart
+```dart
 import 'package:flutter/material.dart';
 import 'package:geophrase_flutter/geophrase_flutter.dart';
 
-class AddressPickerScreen extends StatelessWidget {
+class Checkout extends StatelessWidget {
+  const Checkout({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Verify Address')),
+      appBar: AppBar(title: const Text('Select Delivery Location')),
       body: GeophraseConnect(
-        mode: 'client',        // 'client' (default) or 'server'
-        theme: 'system',       // 'light', 'dark', or 'system'
-        apiKey: 'YOUR_API_KEY', // Required if mode is 'client'
-        orderId: 'ORDER_123',  // Optional
-        onSuccess: (dynamic result) {
-          // Route based on what mode you configured
-          if (result is GeophraseAddress) {
-            print('Resolved Address: ${result.phrase}');
-            print('Metadata: ${result.rawData}');
-          } else if (result is GeophraseToken) {
-            print('Secure Token: ${result.token}');
-            // Pass this token to your backend to resolve
+        // 'server' (used here): widget returns a token. Pass it to your backend to resolve the address. No apiKey needed.
+        // 'client' (default):   widget resolves and returns the full address directly. Requires apiKey.
+        mode: 'server',
+
+        // apiKey: 'YOUR_API_KEY', // required when mode is 'client'
+        theme: 'system',            // 'light' | 'dark' | 'system'
+        orderId: 'ORD-98765',       // your internal reference ID
+        phone: '9999999999',        // prefills the phone field
+
+        onSuccess: (result) {
+          // server mode → GeophraseToken. POST the token to your backend.
+          // client mode → GeophraseAddress. Use directly.
+          if (result is GeophraseToken) {
+            debugPrint('Token: ${result.token}');
+          } else if (result is GeophraseAddress) {
+            debugPrint('Resolved: ${result.phrase}');
           }
-        },
-        onError: (GeophraseError error) {
-          print('Error: ${error.message}');
-        },
-        onClose: () {
           Navigator.of(context).pop();
         },
+        onError: (error) => debugPrint('Geophrase error: ${error.message}'),
+        onClose: () => Navigator.of(context).pop(),
       ),
     );
   }
 }
-~~~
+```
+
+Open it from wherever you'd like (button press, checkout step, etc.):
+
+```dart
+Navigator.of(context).push(
+  MaterialPageRoute(builder: (_) => const Checkout()),
+);
+```
 
 ---
 
-## ⚙️ Configuration Options
+## Props
 
-| Parameter | Type | Required | Description |
-| :--- | :--- | :---: | :--- |
-| `mode` | `String` | No | `'client'` (default) or `'server'`. Determines architectural flow. |
-| `theme` | `String` | No | `'light'`, `'dark'`, or `'system'`. Controls WebView background. |
-| `apiKey` | `String` | **Cond.** | Your API Key. **Required if `mode` is `'client'`.** Omit for server mode. |
-| `orderId` | `String` | No | Your internal tracking ID for the order/session. |
-| `phone` | `String` | No | Prefills the user's phone number in the widget. |
-| `onSuccess` | `function` | **Yes** | Returns `GeophraseAddress` (`client`) or `GeophraseToken` (`server`). |
-| `onError` | `function` | No | Callback fired if network or validation errors occur. |
-| `onClose` | `function` | No | Callback fired when the user manually closes the widget. |
+| Parameter | Type | Default | Required | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `mode` | `String` | `'client'` | No | `'client'` resolves the address in the app. `'server'` returns a token for your backend to exchange. |
+| `apiKey` | `String` | — | **Conditional** | Your [Geophrase API key](https://business.geophrase.com/docs/api-keys). Required when `mode: 'client'`. |
+| `theme` | `String` | `'system'` | No | `'light'`, `'dark'`, or `'system'` (follows OS preference). |
+| `orderId` | `String` | — | No | Your internal reference ID for this session. |
+| `phone` | `String` | — | No | Pre-fills the phone field with a 10-digit Indian mobile number. |
+| `onSuccess` | `Function(dynamic)` | — | **Yes** | Receives a `GeophraseAddress` in client mode, or a `GeophraseToken` in server mode. |
+| `onError` | `Function(GeophraseError)` | — | No | Fired on API or network errors. |
+| `onClose` | `VoidCallback` | — | No | Fired when the user dismisses the widget without selecting an address. |
 
 ---
 
-## 📦 Data Structures
+## Response payloads
 
-### 1. Client Mode Payload (Default)
-When `mode='client'`, the SDK resolves the full geographic data directly:
-~~~json
-{
-  "phrase": "blue-tiger-lake",
-  "rawData": {
-    "addressLine1": "House No 12, GS Road",
-    "city": "Guwahati",
-    "state": "Assam",
-    "postalCode": "781005",
-    "latitude": 26.1445,
-    "longitude": 91.7362
-  }
+### Client mode — `GeophraseAddress`
+
+| Field | Type |
+| :--- | :--- |
+| `phrase` | `String` |
+| `verifiedAccountMobileNum` | `String` |
+| `addressType` | `String` |
+| `contactFullName` | `String` |
+| `contactMobileNum` | `String` |
+| `addressLineOne` | `String` |
+| `addressLineTwo` | `String` |
+| `landmark` | `String` |
+| `city` | `String` |
+| `state` | `String` |
+| `postalCode` | `int?` |
+| `latitude` | `double?` |
+| `longitude` | `double?` |
+| `digiPin` | `String` |
+| `qrCode` | `String` |
+| `rawData` | `Map<String, dynamic>` |
+
+`rawData` holds the unmodified API response so you can read new fields before the SDK exposes them as typed getters.
+
+### Server mode — `GeophraseToken`
+
+```dart
+class GeophraseToken {
+  final String token;
 }
-~~~
+```
 
-### 2. Server Mode Payload (Token Exchange Flow)
-When `mode='server'`, the SDK safely halts before exposing API logic to the frontend and returns a secure token:
-~~~json
-{
-  "token": "gphr_tok_5f8a9b2c1d4e..."
-}
-~~~
+Pass this token to your backend, where you can exchange it for the full address object using your Geophrase API key.
 
 ---
 
-## 🔒 Security Note
+## Which mode should I use?
 
-**The Client-Side Flow (`mode='client'`):**
-The `apiKey` used in the frontend configuration is your Geophrase API Key. Because mobile application code can be reverse-engineered, you **must** actively protect your keys from unauthorized use. In your Geophrase Business Dashboard, generate a uniquely restricted API Key specifically bound to your app's Bundle Identifier (`com.yourapp.bundle`) or Android Package Name.
+**Have a backend? Use `mode: 'server'`.** Your API key stays on your server. Combined with server IP whitelisting in the Geophrase dashboard, only requests from your own backend can use the key — the most secure configuration.
 
-**The Server-Side Flow (`mode='server'`):**
-While we use strict bundle/package restrictions to protect your API keys in client mode, the absolute best practice—if your mobile app communicates with a backend—is to keep your API keys entirely out of the application binary. By using Server Mode, you omit the `apiKey` prop completely. The SDK returns a secure token to the app, which you then safely resolve from your own backend server.
+**No backend? Use `mode: 'client'` with strict restrictions.** The SDK automatically sends your app's Bundle Identifier (iOS) or Package Name (Android) with every request. Bind your API key to those in the Geophrase dashboard, and a key lifted from your binary is useless in a different app.
+
+On Flutter Web, bundle/package restrictions don't apply — prefer `mode: 'server'` with origin restrictions set in the Geophrase dashboard.
 
 ---
 
-## Additional Information
+## Additional information
 
-For full documentation and advanced configuration, visit [business.geophrase.com/docs](https://business.geophrase.com/docs). To report issues or request features, please use our [GitHub issue tracker](https://github.com/geophrase/geophrase-flutter/issues).
+For full documentation, advanced configuration, and dashboard access, visit [business.geophrase.com/docs](https://business.geophrase.com/docs). To report issues or request features, use the [GitHub issue tracker](https://github.com/geophrase/geophrase-flutter/issues).
