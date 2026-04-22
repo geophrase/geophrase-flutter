@@ -1,7 +1,6 @@
 # geophrase_flutter
 
 ![pub package](https://img.shields.io/pub/v/geophrase_flutter)
-![license](https://img.shields.io/pub/l/geophrase_flutter)
 
 Drop-in address selector for Flutter apps serving Indian customers. Captures perfectly structured addresses and GPS coordinates to reduce Return to Origin (RTO) costs.
 
@@ -124,21 +123,41 @@ Navigator.of(context).push(
 | `landmark` | `String` |
 | `city` | `String` |
 | `state` | `String` |
-| `postalCode` | `int?` |
-| `latitude` | `double?` |
-| `longitude` | `double?` |
+| `postalCode` | `int` |
+| `latitude` | `double` |
+| `longitude` | `double` |
 | `digiPin` | `String` |
 | `qrCode` | `String` |
 | `rawData` | `Map<String, dynamic>` |
+
+Example:
+
+```json
+{
+  "phrase": "eid-hiu-sac",
+  "verified_account_mobile_num": "9999999999",
+  "address_type": "OFFICE",
+  "contact_full_name": "Rohan",
+  "contact_mobile_num": "9999999999",
+  "address_line_one": "Floor 99",
+  "address_line_two": "GTB Building",
+  "landmark": "Map: gphr.in/eid-hiu-sac",
+  "city": "Delhi",
+  "state": "Delhi",
+  "postal_code": 110007,
+  "latitude": 16.241303391104953,
+  "longitude": 99.7836155238037,
+  "digi_pin": "202-P85-M87C",
+  "qr_code": "https://storage.googleapis.com/geophrase/qr-codes/eid-hiu-sac.png"
+}
+```
 
 `rawData` holds the unmodified API response so you can read new fields before the SDK exposes them as typed getters.
 
 ### Server mode — `GeophraseToken`
 
-```dart
-class GeophraseToken {
-  final String token;
-}
+```json
+{ "token": "d098dc34-8995-4c07-b10c-1abcade94651" }
 ```
 
 Pass this token to your backend, where you can exchange it for the full address object using your Geophrase API key.

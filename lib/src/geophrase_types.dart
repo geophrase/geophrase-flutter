@@ -11,9 +11,9 @@ class GeophraseAddress {
   final String landmark;
   final String city;
   final String state;
-  final int? postalCode;
-  final double? latitude;
-  final double? longitude;
+  final int postalCode;
+  final double latitude;
+  final double longitude;
   final String digiPin;
   final String qrCode;
 
@@ -41,25 +41,22 @@ class GeophraseAddress {
   });
 
   factory GeophraseAddress.fromJson(Map<String, dynamic> json) {
-    double? toDouble(dynamic v) => v is num ? v.toDouble() : null;
-    int? toInt(dynamic v) => v is num ? v.toInt() : (v is String ? int.tryParse(v) : null);
-
     return GeophraseAddress(
-      phrase: json['phrase']?.toString() ?? '',
-      verifiedAccountMobileNum: json['verified_account_mobile_num']?.toString() ?? '',
-      addressType: json['address_type']?.toString() ?? '',
-      contactFullName: json['contact_full_name']?.toString() ?? '',
-      contactMobileNum: json['contact_mobile_num']?.toString() ?? '',
-      addressLineOne: json['address_line_one']?.toString() ?? '',
-      addressLineTwo: json['address_line_two']?.toString() ?? '',
-      landmark: json['landmark']?.toString() ?? '',
-      city: json['city']?.toString() ?? '',
-      state: json['state']?.toString() ?? '',
-      postalCode: toInt(json['postal_code']),
-      latitude: toDouble(json['latitude']),
-      longitude: toDouble(json['longitude']),
-      digiPin: json['digi_pin']?.toString() ?? '',
-      qrCode: json['qr_code']?.toString() ?? '',
+      phrase: json['phrase'] as String,
+      verifiedAccountMobileNum: json['verified_account_mobile_num'] as String,
+      addressType: json['address_type'] as String,
+      contactFullName: json['contact_full_name'] as String,
+      contactMobileNum: json['contact_mobile_num'] as String,
+      addressLineOne: json['address_line_one'] as String,
+      addressLineTwo: json['address_line_two'] as String,
+      landmark: json['landmark'] as String,
+      city: json['city'] as String,
+      state: json['state'] as String,
+      postalCode: (json['postal_code'] as num).toInt(),
+      latitude: (json['latitude'] as num).toDouble(),
+      longitude: (json['longitude'] as num).toDouble(),
+      digiPin: json['digi_pin'] as String,
+      qrCode: json['qr_code'] as String,
       rawData: json,
     );
   }
