@@ -1,3 +1,7 @@
+## 1.3.0
+
+* Example Application Added
+
 ## 1.2.2
 
 * Minor fix
