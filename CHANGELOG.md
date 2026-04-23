@@ -1,3 +1,7 @@
+## 1.2.2
+
+* Minor fix
+
 ## 1.2.1
 
 * Android Status Bar color fix

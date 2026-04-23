@@ -325,15 +325,21 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
       ),
       child: Scaffold(
         backgroundColor: bgColor,
-        body: Stack(
-          children: [
-            WebViewWidget(controller: _controller),
-            if (_isLoading)
-              Container(
-                color: bgColor,
-                child: Center(child: CircularProgressIndicator(color: spinnerColor)),
-              ),
-          ],
+        // `top: false` lets the widget's header render behind the (transparent)
+        // status bar. Bottom safe-area padding is kept so the Continue button
+        // and "Powered by Geophrase" footer sit above the gesture/nav bar.
+        body: SafeArea(
+          top: false,
+          child: Stack(
+            children: [
+              WebViewWidget(controller: _controller),
+              if (_isLoading)
+                Container(
+                  color: bgColor,
+                  child: Center(child: CircularProgressIndicator(color: spinnerColor)),
+                ),
+            ],
+          ),
         ),
       ),
     );
