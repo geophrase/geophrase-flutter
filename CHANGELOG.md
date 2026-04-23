@@ -1,3 +1,7 @@
+## 1.2.1
+
+* Android Status Bar color fix
+
 ## 1.2.0
 
 * Aligned behavior with the React Native SDK for consistency across platforms.

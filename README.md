@@ -43,18 +43,17 @@ No extra configuration needed — the widget is rendered in a sandboxed iframe w
 
 The snippet below uses `mode: 'server'` so you can drop it into your app and see the widget **without creating an API key first**. Switching to client mode is a two-line change — see the inline comment.
 
+> **Do not wrap `GeophraseConnect` in a `Scaffold` with an `AppBar`.** The widget renders its own header (title, back button, account indicator). Push it as a full-screen route and let it fill the screen.
+
 ```dart
 import 'package:flutter/material.dart';
 import 'package:geophrase_flutter/geophrase_flutter.dart';
 
-class Checkout extends StatelessWidget {
-  const Checkout({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Select Delivery Location')),
-      body: GeophraseConnect(
+void openGeophrase(BuildContext context) {
+  Navigator.of(context).push(
+    MaterialPageRoute(
+      fullscreenDialog: true,
+      builder: (routeContext) => GeophraseConnect(
         // 'server' (used here): widget returns a token. Pass it to your backend to resolve the address. No apiKey needed.
         // 'client' (default):   widget resolves and returns the full address directly. Requires apiKey.
         mode: 'server',
@@ -72,21 +71,22 @@ class Checkout extends StatelessWidget {
           } else if (result is GeophraseAddress) {
             debugPrint('Resolved: ${result.phrase}');
           }
-          Navigator.of(context).pop();
+          Navigator.of(routeContext).pop();
         },
         onError: (error) => debugPrint('Geophrase error: ${error.message}'),
-        onClose: () => Navigator.of(context).pop(),
+        onClose: () => Navigator.of(routeContext).pop(),
       ),
-    );
-  }
+    ),
+  );
 }
 ```
 
-Open it from wherever you'd like (button press, checkout step, etc.):
+Wire it up to any trigger — a button in your checkout step, an address picker tap, etc.:
 
 ```dart
-Navigator.of(context).push(
-  MaterialPageRoute(builder: (_) => const Checkout()),
+ElevatedButton(
+  onPressed: () => openGeophrase(context),
+  child: const Text('Select delivery location'),
 );
 ```
 

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -311,11 +312,20 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
     final bgColor = resolvedDark ? const Color(0xFF121212) : Colors.white;
     final spinnerColor = resolvedDark ? Colors.white : Colors.black;
 
-    return Scaffold(
-      backgroundColor: bgColor,
-      body: SafeArea(
-        bottom: false,
-        child: Stack(
+    // Pin a constant status bar style so the host app's theme doesn't paint
+    // the status bar (e.g. a blue primary color bleeding into the top strip).
+    // The status bar background is left transparent — the widget's own header
+    // renders behind it and handles safe-area insets internally. This mirrors
+    // how the React Native Modal behaves.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: bgColor,
+        body: Stack(
           children: [
             WebViewWidget(controller: _controller),
             if (_isLoading)
