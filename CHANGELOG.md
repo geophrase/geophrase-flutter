@@ -1,3 +1,7 @@
+## 1.3.2
+
+* Minor bug fix
+
 ## 1.3.1
 
 * Auto publish from Github action
