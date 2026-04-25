@@ -156,10 +156,10 @@ packages:
     dependency: "direct main"
     description:
       name: geophrase_flutter
-      sha256: ef459488c295f25f1908e51924bea9c99f461a08b7b7c5af14d28f28302a66a0
+      sha256: "25de0bec8ed8c24b005cfdf7cc7d775ad652fc568fe05d71945bf249cf8f2821"
       url: "https://pub.dev"
     source: hosted
-    version: "1.2.2"
+    version: "1.3.3"
   http:
     dependency: transitive
     description:

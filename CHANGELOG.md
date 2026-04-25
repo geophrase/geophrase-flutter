@@ -1,3 +1,9 @@
+## 1.4.0
+
+* Bumped dependencies to latest stable: `geolocator ^14.0.0`, `package_info_plus ^10.0.0`, `web ^1.1.0`, `webview_flutter ^4.13.0`.
+* Migrated `Geolocator.getCurrentPosition` call to the `LocationSettings`-based API required by geolocator 12+.
+* Expanded dartdoc coverage on the public API (`GeophraseAddress`, `GeophraseToken`, `GeophraseError`, `GeophraseEndpoints`).
+
 ## 1.3.3
 
 * Minor bug fix

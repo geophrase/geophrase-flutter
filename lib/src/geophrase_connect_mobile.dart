@@ -218,8 +218,10 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
     // the high-accuracy watch may still succeed.
     unawaited(
       Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.low,
-        timeLimit: const Duration(seconds: 10),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.low,
+          timeLimit: Duration(seconds: 10),
+        ),
       ).then((pos) {
         if (mounted) _sendFix(pos);
       }).catchError((_) {}),
