@@ -1,6 +1,6 @@
 name: geophrase_flutter
-description: "Flutter SDK for Geophrase Connect. Lets your app collect verified, location-backed Indian addresses via a short phrase, returning structured address data or a server-exchangeable token."
-version: 1.4.0
+description: "Embed Geophrase Connect in your Flutter app to capture GPS-validated delivery addresses at checkout, reducing failed deliveries for your customers."
+version: 1.4.1
 homepage: "https://geophrase.com/docs"
 repository: "https://github.com/geophrase/geophrase-flutter"
 issue_tracker: "https://github.com/geophrase/geophrase-flutter/issues"
