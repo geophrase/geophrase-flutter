@@ -1,3 +1,7 @@
+## 1.3.1
+
+* Auto publish from Github action
+
 ## 1.3.0
 
 * Example Application Added
