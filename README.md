@@ -4,7 +4,7 @@
 
 Drop-in address selector for Flutter apps serving Indian customers. Captures perfectly structured addresses and GPS coordinates to reduce Return to Origin (RTO) costs.
 
-📖 **[Full documentation and integration guide](https://business.geophrase.com/docs)**
+📖 **[Full documentation and integration guide](https://geophrase.com/docs)**
 
 *Also building for web or React Native? See [`@geophrase/core`](https://www.npmjs.com/package/@geophrase/core), [`@geophrase/react`](https://www.npmjs.com/package/@geophrase/react), and [`@geophrase/react-native`](https://www.npmjs.com/package/@geophrase/react-native).*
 
@@ -97,7 +97,7 @@ ElevatedButton(
 | Parameter | Type | Default | Required | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | `mode` | `String` | `'client'` | No | `'client'` resolves the address in the app. `'server'` returns a token for your backend to exchange. |
-| `apiKey` | `String` | — | **Conditional** | Your [Geophrase API key](https://business.geophrase.com/docs/api-keys). Required when `mode: 'client'`. |
+| `apiKey` | `String` | — | **Conditional** | Your [Geophrase API key](https://geophrase.com/docs/api-keys). Required when `mode: 'client'`. |
 | `theme` | `String` | `'system'` | No | `'light'`, `'dark'`, or `'system'` (follows OS preference). |
 | `orderId` | `String` | — | No | Your internal reference ID for this session. |
 | `phone` | `String` | — | No | Pre-fills the phone field with a 10-digit Indian mobile number. |
@@ -176,4 +176,4 @@ On Flutter Web, bundle/package restrictions don't apply — prefer `mode: 'serve
 
 ## Additional information
 
-For full documentation, advanced configuration, and dashboard access, visit [business.geophrase.com/docs](https://business.geophrase.com/docs). To report issues or request features, use the [GitHub issue tracker](https://github.com/geophrase/geophrase-flutter/issues).
+For full documentation, advanced configuration, and dashboard access, visit [geophrase.com/docs](https://geophrase.com/docs). To report issues or request features, use the [GitHub issue tracker](https://github.com/geophrase/geophrase-flutter/issues).
