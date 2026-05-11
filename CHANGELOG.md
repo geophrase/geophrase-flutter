@@ -1,3 +1,7 @@
+## 1.5.0
+
+* more fields in address object now
+
 ## 1.4.1
 
 * minor metadata update

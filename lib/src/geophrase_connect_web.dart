@@ -91,7 +91,6 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
   String _buildWidgetUrl() {
     final safeTheme = ['light', 'dark', 'system'].contains(widget.theme) ? widget.theme : null;
     final params = <String, String>{};
-    if (widget.orderId != null) params['order-id'] = widget.orderId!;
     if (widget.phone != null) params['phone'] = widget.phone!;
     if (safeTheme != null) params['theme'] = safeTheme;
     return Uri.parse(_widgetOrigin).replace(queryParameters: params.isEmpty ? null : params).toString();
@@ -135,23 +134,30 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
     }
 
     if (type == 'GEOPHRASE_RESOLUTION_TOKEN') {
+      final requestId = data['requestId']?.toString() ?? '';
+
       if (widget.mode == 'server') {
-        _safeCall(widget.onSuccess, GeophraseToken(token: data['token']?.toString() ?? ''));
+        _safeCall(widget.onSuccess, GeophraseRequestId(requestId: requestId));
       } else {
-        _handleTokenResolution(data['token']?.toString() ?? '');
+        _handleRequestIdResolution(requestId);
       }
     }
   }
 
-  Future<void> _handleTokenResolution(String token) async {
+  Future<void> _handleRequestIdResolution(String requestId) async {
     try {
+      final payload = <String, dynamic>{'request_id': requestId};
+      if (widget.orderId != null && widget.orderId!.isNotEmpty) {
+        payload['order_id'] = widget.orderId!;
+      }
+
       final response = await http.post(
         Uri.parse('$_apiBase/business/resolve/'),
         headers: {
           'X-API-Key': widget.apiKey ?? '',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({'token': token}),
+        body: jsonEncode(payload),
       ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {

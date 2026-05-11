@@ -14,7 +14,7 @@ const String _defaultApiBase = 'https://api.geophrase.com';
 
 class GeophraseConnect extends StatefulWidget {
   /// `'client'` (default) resolves the address in-app; `'server'` returns a
-  /// token for your backend to exchange.
+  /// requestId for your backend to exchange.
   final String mode;
 
   /// `'light'`, `'dark'`, or `'system'`.
@@ -29,7 +29,7 @@ class GeophraseConnect extends StatefulWidget {
   /// Prefill the phone field to skip one step of OTP entry.
   final String? phone;
 
-  /// Client mode receives a [GeophraseAddress]; server mode receives a [GeophraseToken].
+  /// Client mode receives a [GeophraseAddress]; server mode receives a [GeophraseRequestId].
   final void Function(dynamic result) onSuccess;
 
   final void Function(GeophraseError error)? onError;
@@ -119,7 +119,6 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
   String _buildWidgetUrl() {
     final safeTheme = ['light', 'dark', 'system'].contains(widget.theme) ? widget.theme : 'system';
     final params = <String, String>{'platform': 'mobile', 'theme': safeTheme};
-    if (widget.orderId != null) params['order-id'] = widget.orderId!;
     if (widget.phone != null) params['phone'] = widget.phone!;
     return Uri.parse(_widgetOrigin).replace(queryParameters: params).toString();
   }
@@ -161,10 +160,12 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
     if (type == 'GEOPHRASE_RESOLUTION_TOKEN') {
       _stopLocationWatch();
 
+      final requestId = data['requestId']?.toString() ?? '';
+
       if (widget.mode == 'server') {
-        _safeCall(widget.onSuccess, GeophraseToken(token: data['token']?.toString() ?? ''));
+        _safeCall(widget.onSuccess, GeophraseRequestId(requestId: requestId));
       } else {
-        _handleTokenResolution(data['token']?.toString() ?? '');
+        _handleRequestIdResolution(requestId);
       }
     }
   }
@@ -245,7 +246,7 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
     );
   }
 
-  Future<void> _handleTokenResolution(String token) async {
+  Future<void> _handleRequestIdResolution(String requestId) async {
     try {
       final packageInfo = await PackageInfo.fromPlatform();
       final bundleId = packageInfo.packageName;
@@ -261,10 +262,15 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
         headers['X-Android-Package'] = bundleId;
       }
 
+      final payload = <String, dynamic>{'request_id': requestId};
+      if (widget.orderId != null && widget.orderId!.isNotEmpty) {
+        payload['order_id'] = widget.orderId!;
+      }
+
       final response = await http.post(
         Uri.parse('$_apiBase/business/resolve/'),
         headers: headers,
-        body: jsonEncode({'token': token}),
+        body: jsonEncode(payload),
       ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {

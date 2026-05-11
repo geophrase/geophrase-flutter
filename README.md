@@ -54,7 +54,7 @@ void openGeophrase(BuildContext context) {
     MaterialPageRoute(
       fullscreenDialog: true,
       builder: (routeContext) => GeophraseConnect(
-        // 'server' (used here): widget returns a token. Pass it to your backend to resolve the address. No apiKey needed.
+        // 'server' (used here): widget returns a requestId. Pass it to your backend to resolve the address. No apiKey needed.
         // 'client' (default):   widget resolves and returns the full address directly. Requires apiKey.
         mode: 'server',
 
@@ -64,12 +64,12 @@ void openGeophrase(BuildContext context) {
         phone: '9999999999',        // prefills the phone field
 
         onSuccess: (result) {
-          // server mode → GeophraseToken. POST the token to your backend.
+          // server mode → GeophraseRequestId. POST the requestId to your backend.
           // client mode → GeophraseAddress. Use directly.
-          if (result is GeophraseToken) {
-            debugPrint('Token: ${result.token}');
+          if (result is GeophraseRequestId) {
+            debugPrint('Request ID: ${result.requestId}');
           } else if (result is GeophraseAddress) {
-            debugPrint('Resolved: ${result.phrase}');
+            debugPrint('Resolved: ${result.shortCode}');
           }
           Navigator.of(routeContext).pop();
         },
@@ -96,12 +96,12 @@ ElevatedButton(
 
 | Parameter | Type | Default | Required | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `mode` | `String` | `'client'` | No | `'client'` resolves the address in the app. `'server'` returns a token for your backend to exchange. |
+| `mode` | `String` | `'client'` | No | `'client'` resolves the address in the app. `'server'` returns a `requestId` for your backend to exchange. |
 | `apiKey` | `String` | — | **Conditional** | Your [Geophrase API key](https://geophrase.com/docs/api-keys). Required when `mode: 'client'`. |
 | `theme` | `String` | `'system'` | No | `'light'`, `'dark'`, or `'system'` (follows OS preference). |
 | `orderId` | `String` | — | No | Your internal reference ID for this session. |
 | `phone` | `String` | — | No | Pre-fills the phone field with a 10-digit Indian mobile number. |
-| `onSuccess` | `Function(dynamic)` | — | **Yes** | Receives a `GeophraseAddress` in client mode, or a `GeophraseToken` in server mode. |
+| `onSuccess` | `Function(dynamic)` | — | **Yes** | Receives a `GeophraseAddress` in client mode, or a `GeophraseRequestId` in server mode. |
 | `onError` | `Function(GeophraseError)` | — | No | Fired on API or network errors. |
 | `onClose` | `VoidCallback` | — | No | Fired when the user dismisses the widget without selecting an address. |
 
@@ -111,56 +111,70 @@ ElevatedButton(
 
 ### Client mode — `GeophraseAddress`
 
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `shortCode` | `String` | Short alphanumeric code identifying the captured address. |
+| `shortLink` | `String` | Short URL pointing to the captured address. |
+| `qrCode` | `String` | URL to a QR code image encoding the short link. |
+| `capturedAt` | `int` | Capture timestamp as milliseconds since the Unix epoch. |
+| `orderId` | `String` | Merchant-supplied reference ID; empty string when `orderId` was not passed. |
+| `address` | `GeophraseAddressDetails` | Structured address fields (see below). |
+| `rawData` | `Map<String, dynamic>` | Unmodified API response. |
+
+`GeophraseAddressDetails`:
+
 | Field | Type |
 | :--- | :--- |
-| `phrase` | `String` |
-| `verifiedAccountMobileNum` | `String` |
-| `addressType` | `String` |
-| `contactFullName` | `String` |
-| `contactMobileNum` | `String` |
-| `addressLineOne` | `String` |
-| `addressLineTwo` | `String` |
-| `landmark` | `String` |
 | `city` | `String` |
 | `state` | `String` |
-| `postalCode` | `int` |
+| `digiPin` | `String` |
+| `landmark` | `String` |
 | `latitude` | `double` |
 | `longitude` | `double` |
-| `digiPin` | `String` |
-| `qrCode` | `String` |
-| `rawData` | `Map<String, dynamic>` |
+| `postalCode` | `int` |
+| `addressType` | `String` |
+| `addressLineOne` | `String` |
+| `addressLineTwo` | `String` |
+| `contactFullName` | `String` |
+| `verifiedMobileNum` | `String` |
 
 Example:
 
 ```json
 {
-  "phrase": "eid-hiu-sac",
-  "verified_account_mobile_num": "9999999999",
-  "address_type": "OFFICE",
-  "contact_full_name": "Rohan",
-  "contact_mobile_num": "9999999999",
-  "address_line_one": "Floor 99",
-  "address_line_two": "GTB Building",
-  "landmark": "Map: gphr.in/eid-hiu-sac",
-  "city": "Delhi",
-  "state": "Delhi",
-  "postal_code": 110007,
-  "latitude": 16.241303391104953,
-  "longitude": 99.7836155238037,
-  "digi_pin": "202-P85-M87C",
-  "qr_code": "https://storage.googleapis.com/geophrase/qr-codes/eid-hiu-sac.png"
+  "short_code": "e6w9th",
+  "short_link": "https://gphr.in/e6w9th",
+  "qr_code": "https://storage.googleapis.com/geophrase/qr-codes/e6w9th.png",
+  "captured_at": 1778485231452,
+  "order_id": "ORD-8786",
+  "address": {
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "digi_pin": "172-P83-4648",
+    "landmark": "Map: gphr.in/e6w9th",
+    "latitude": 23.2510677,
+    "longitude": 82.7746059,
+    "postal_code": 781012,
+    "address_type": "HOUSE",
+    "address_line_one": "Flat B, 4th Floor",
+    "address_line_two": "ABC Square Tower",
+    "contact_full_name": "Ramesh",
+    "verified_mobile_num": "9999999999"
+  }
 }
 ```
 
+All fields are always present. `order_id` is an empty string when `orderId` was not passed. `landmark` and `address_line_two` may be empty strings. No field is ever `null`.
+
 `rawData` holds the unmodified API response so you can read new fields before the SDK exposes them as typed getters.
 
-### Server mode — `GeophraseToken`
+### Server mode — `GeophraseRequestId`
 
 ```json
-{ "token": "d098dc34-8995-4c07-b10c-1abcade94651" }
+{ "requestId": "6cafc00f-30ff-48f8-97c2-61e3da8f0acf" }
 ```
 
-Pass this token to your backend, where you can exchange it for the full address object using your Geophrase API key.
+Pass this `requestId` to your backend, where you can exchange it for the full address object using your Geophrase API key.
 
 ---
 

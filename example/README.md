@@ -2,7 +2,7 @@
 
 A minimal Flutter application demonstrating how to integrate the `geophrase_flutter` SDK.
 
-This example is configured to use `mode: 'server'`, meaning you can run it immediately without needing to generate a Geophrase API key. It will return a secure token upon completion.
+This example is configured to use `mode: 'server'`, meaning you can run it immediately without needing to generate a Geophrase API key. It will return a secure `requestId` upon completion that your backend can exchange for the full address.
 
 ## 🚀 How to Run
 
