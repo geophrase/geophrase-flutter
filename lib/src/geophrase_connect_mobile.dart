@@ -13,6 +13,10 @@ const String _defaultWidgetOrigin = 'https://connect.geophrase.com';
 const String _defaultApiBase = 'https://api.geophrase.com';
 
 class GeophraseConnect extends StatefulWidget {
+  /// Your 8-character public Key ID (shown in the Geophrase dashboard).
+  /// Required in both modes; identifies your account to the widget.
+  final String apiKeyId;
+
   /// `'client'` (default) resolves the address in-app; `'server'` returns a
   /// requestId for your backend to exchange.
   final String mode;
@@ -40,6 +44,7 @@ class GeophraseConnect extends StatefulWidget {
 
   const GeophraseConnect({
     super.key,
+    required this.apiKeyId,
     this.mode = 'client',
     this.theme = 'system',
     this.apiKey,
@@ -75,6 +80,11 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
     // misconfigured prop can't crash the merchant's app.
     if (!['client', 'server'].contains(widget.mode)) {
       debugPrint("Geophrase Error: Invalid mode '${widget.mode}'. Expected 'client' or 'server'.");
+    }
+    if (widget.apiKeyId.isEmpty) {
+      debugPrint("Geophrase Error: 'apiKeyId' is required.");
+    } else if (widget.apiKeyId.length != 8) {
+      debugPrint("Geophrase Error: 'apiKeyId' must be an 8-character string.");
     }
     if (widget.mode == 'client' && (widget.apiKey == null || widget.apiKey!.isEmpty)) {
       debugPrint("Geophrase Error: 'apiKey' is required when mode is 'client'.");
@@ -118,7 +128,7 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
 
   String _buildWidgetUrl() {
     final safeTheme = ['light', 'dark', 'system'].contains(widget.theme) ? widget.theme : 'system';
-    final params = <String, String>{'platform': 'mobile', 'theme': safeTheme};
+    final params = <String, String>{'platform': 'mobile', 'key-id': widget.apiKeyId, 'theme': safeTheme};
     if (widget.phone != null) params['phone'] = widget.phone!;
     return Uri.parse(_widgetOrigin).replace(queryParameters: params).toString();
   }

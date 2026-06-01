@@ -31,13 +31,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (routeContext) => GeophraseConnect(
+          // Required in both modes — your 8-character public Key ID from the dashboard.
+          apiKeyId: 'YOUR_API_KEY_ID',
+
           // 'server': widget returns a short-lived requestId — pass it to your
-          //           backend to exchange for the full address. No apiKey needed.
+          //           backend to exchange for the full address. No secret key needed.
           // 'client': widget resolves and returns the full address directly.
           //           Requires apiKey.
           mode: 'server',
 
-          // apiKey: 'YOUR_API_KEY', // required when mode is 'client'
+          // apiKey: 'YOUR_API_KEY', // secret key, required when mode is 'client'
           theme: 'system',          // optional — 'light' | 'dark' | 'system'
           orderId: 'ORD-98765',     // optional — your internal reference ID
           phone: '9999999999',      // optional — prefills the phone field

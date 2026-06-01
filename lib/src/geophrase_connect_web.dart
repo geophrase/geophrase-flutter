@@ -12,6 +12,7 @@ const String _defaultWidgetOrigin = 'https://connect.geophrase.com';
 const String _defaultApiBase = 'https://api.geophrase.com';
 
 class GeophraseConnect extends StatefulWidget {
+  final String apiKeyId;
   final String mode;
   final String theme;
   final String? apiKey;
@@ -24,6 +25,7 @@ class GeophraseConnect extends StatefulWidget {
 
   const GeophraseConnect({
     super.key,
+    required this.apiKeyId,
     this.mode = 'client',
     this.theme = 'system',
     this.apiKey,
@@ -59,6 +61,11 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
     if (!['client', 'server'].contains(widget.mode)) {
       debugPrint("Geophrase Error: Invalid mode '${widget.mode}'. Expected 'client' or 'server'.");
     }
+    if (widget.apiKeyId.isEmpty) {
+      debugPrint("Geophrase Error: 'apiKeyId' is required.");
+    } else if (widget.apiKeyId.length != 8) {
+      debugPrint("Geophrase Error: 'apiKeyId' must be an 8-character string.");
+    }
     if (widget.mode == 'client' && (widget.apiKey == null || widget.apiKey!.isEmpty)) {
       debugPrint("Geophrase Error: 'apiKey' is required when mode is 'client'.");
     }
@@ -90,10 +97,10 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
 
   String _buildWidgetUrl() {
     final safeTheme = ['light', 'dark', 'system'].contains(widget.theme) ? widget.theme : null;
-    final params = <String, String>{};
+    final params = <String, String>{'key-id': widget.apiKeyId};
     if (widget.phone != null) params['phone'] = widget.phone!;
     if (safeTheme != null) params['theme'] = safeTheme;
-    return Uri.parse(_widgetOrigin).replace(queryParameters: params.isEmpty ? null : params).toString();
+    return Uri.parse(_widgetOrigin).replace(queryParameters: params).toString();
   }
 
   void _safeCall(Function? fn, [dynamic payload]) {

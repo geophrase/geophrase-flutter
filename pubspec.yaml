@@ -1,6 +1,6 @@
 name: geophrase_flutter
 description: "Embed Geophrase Connect in your Flutter app to capture GPS-validated delivery addresses at checkout, reducing failed deliveries for your customers."
-version: 1.5.0
+version: 1.6.0
 homepage: "https://geophrase.com/docs"
 repository: "https://github.com/geophrase/geophrase-flutter"
 issue_tracker: "https://github.com/geophrase/geophrase-flutter/issues"

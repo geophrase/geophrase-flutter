@@ -1,3 +1,7 @@
+## 1.6.0
+
+* Added required `apiKeyId` (your public Key ID), now passed to the widget on every capture.
+
 ## 1.5.0
 
 * more fields in address object now

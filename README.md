@@ -41,7 +41,7 @@ No extra configuration needed — the widget is rendered in a sandboxed iframe w
 
 ## Quick Start
 
-The snippet below uses `mode: 'server'` so you can drop it into your app and see the widget **without creating an API key first**. Switching to client mode is a two-line change — see the inline comment.
+The snippet below uses `mode: 'server'`, so the only credential you need in the app is your public **Key ID** — no secret API key. Switching to client mode is a two-line change — see the inline comment.
 
 > **Do not wrap `GeophraseConnect` in a `Scaffold` with an `AppBar`.** The widget renders its own header (title, back button, account indicator). Push it as a full-screen route and let it fill the screen.
 
@@ -54,11 +54,13 @@ void openGeophrase(BuildContext context) {
     MaterialPageRoute(
       fullscreenDialog: true,
       builder: (routeContext) => GeophraseConnect(
-        // 'server' (used here): widget returns a requestId. Pass it to your backend to resolve the address. No apiKey needed.
+        apiKeyId: 'YOUR_API_KEY_ID', // required in both modes — your public Key ID
+
+        // 'server' (used here): widget returns a requestId. Pass it to your backend to resolve the address. No secret key needed.
         // 'client' (default):   widget resolves and returns the full address directly. Requires apiKey.
         mode: 'server',
 
-        // apiKey: 'YOUR_API_KEY', // required when mode is 'client'
+        // apiKey: 'YOUR_API_KEY', // secret key, required when mode is 'client'
         theme: 'system',            // 'light' | 'dark' | 'system'
         orderId: 'ORD-98765',       // your internal reference ID
         phone: '9999999999',        // prefills the phone field
@@ -96,14 +98,17 @@ ElevatedButton(
 
 | Parameter | Type | Default | Required | Description |
 | :--- | :--- | :--- | :--- | :--- |
+| `apiKeyId` | `String` | — | **Yes** | Your 8-character public [Key ID](https://geophrase.com/docs/api-keys) (shown in the dashboard). Required in **both** modes; identifies your account to the widget. |
 | `mode` | `String` | `'client'` | No | `'client'` resolves the address in the app. `'server'` returns a `requestId` for your backend to exchange. |
-| `apiKey` | `String` | — | **Conditional** | Your [Geophrase API key](https://geophrase.com/docs/api-keys). Required when `mode: 'client'`. |
+| `apiKey` | `String` | — | **Conditional** | Your secret [Geophrase API key](https://geophrase.com/docs/api-keys) (the full key string). Required when `mode: 'client'`. |
 | `theme` | `String` | `'system'` | No | `'light'`, `'dark'`, or `'system'` (follows OS preference). |
 | `orderId` | `String` | — | No | Your internal reference ID for this session. |
 | `phone` | `String` | — | No | Pre-fills the phone field with a 10-digit Indian mobile number. |
 | `onSuccess` | `Function(dynamic)` | — | **Yes** | Receives a `GeophraseAddress` in client mode, or a `GeophraseRequestId` in server mode. |
 | `onError` | `Function(GeophraseError)` | — | No | Fired on API or network errors. |
 | `onClose` | `VoidCallback` | — | No | Fired when the user dismisses the widget without selecting an address. |
+
+> Two distinct credentials: `apiKeyId` is your **public** Key ID (safe to ship in the app, required in both modes), while `apiKey` is your **secret** key (client mode only).
 
 ---
 
