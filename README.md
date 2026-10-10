@@ -6,6 +6,8 @@ Drop-in address selector for Flutter apps serving Indian customers. Captures per
 
 📖 **[Full documentation and integration guide](https://geophrase.com/docs)**
 
+🗺️ **[How GPS address capture works with couriers or your own riders](https://geophrase.com/features/gps-address-capture)**
+
 *Also building for web or React Native? See [`@geophrase/core`](https://www.npmjs.com/package/@geophrase/core), [`@geophrase/react`](https://www.npmjs.com/package/@geophrase/react), and [`@geophrase/react-native`](https://www.npmjs.com/package/@geophrase/react-native).*
 
 ---

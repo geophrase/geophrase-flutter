@@ -1,3 +1,7 @@
+## 1.6.1
+
+* README: added a link to how GPS address capture works.
+
 ## 1.6.0
 
 * Added required `apiKeyId` (your public Key ID), now passed to the widget on every capture.
