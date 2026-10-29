@@ -17,6 +17,7 @@ class GeophraseConnect extends StatefulWidget {
   final String theme;
   final String? apiKey;
   final String? orderId;
+  final String? noteForAgent;
   final String? phone;
   final void Function(dynamic result) onSuccess;
   final void Function(GeophraseError error)? onError;
@@ -31,6 +32,7 @@ class GeophraseConnect extends StatefulWidget {
     this.apiKey,
     required this.onSuccess,
     this.orderId,
+    this.noteForAgent,
     this.phone,
     this.onError,
     this.onClose,
@@ -156,6 +158,12 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
       final payload = <String, dynamic>{'request_id': requestId};
       if (widget.orderId != null && widget.orderId!.isNotEmpty) {
         payload['order_id'] = widget.orderId!;
+      }
+      final noteForAgent = widget.noteForAgent;
+      if (noteForAgent != null && noteForAgent.isNotEmpty) {
+        // Cut to the API's limit: a longer note would fail the whole address capture.
+        payload['note_for_agent'] =
+            noteForAgent.length > 300 ? noteForAgent.substring(0, 300) : noteForAgent;
       }
 
       final response = await http.post(

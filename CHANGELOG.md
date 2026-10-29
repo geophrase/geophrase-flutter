@@ -1,3 +1,7 @@
+## 1.7.0
+
+* Added optional `noteForAgent`: a note shown to your delivery agent, never to the customer. Client mode only; notes over 300 characters are cut.
+
 ## 1.6.1
 
 * README: added a link to how GPS address capture works.

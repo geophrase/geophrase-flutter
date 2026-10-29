@@ -105,6 +105,7 @@ ElevatedButton(
 | `apiKey` | `String` | — | **Conditional** | Your secret [Geophrase API key](https://geophrase.com/docs/api-keys) (the full key string). Required when `mode: 'client'`. |
 | `theme` | `String` | `'system'` | No | `'light'`, `'dark'`, or `'system'` (follows OS preference). |
 | `orderId` | `String` | — | No | Your internal reference ID for this session. |
+| `noteForAgent` | `String` | None | No | Note shown to your delivery agent, never to the customer. Client mode only; notes over 300 characters are cut. It is sent from the customer's device, so the customer can change it; send payment instructions, such as cash to collect, from your server or the dashboard. In server mode, send `note_for_agent` with your [resolve call](https://geophrase.com/docs/resolve-endpoint). |
 | `phone` | `String` | — | No | Pre-fills the phone field with a 10-digit Indian mobile number. |
 | `onSuccess` | `Function(dynamic)` | — | **Yes** | Receives a `GeophraseAddress` in client mode, or a `GeophraseRequestId` in server mode. |
 | `onError` | `Function(GeophraseError)` | — | No | Fired on API or network errors. |
