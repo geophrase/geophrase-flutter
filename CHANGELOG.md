@@ -1,3 +1,7 @@
+## 1.8.0
+
+* Added optional `hubCode` (delivery hub code, required in client mode when your business has multiple active delivery hubs) and returned `hub` (`GeophraseHub`) on `GeophraseAddress` when applicable.
+
 ## 1.7.0
 
 * Added optional `noteForAgent`: a note shown to your delivery agent, never to the customer. Client mode only; notes over 300 characters are cut.

@@ -76,12 +76,33 @@ class GeophraseAddressDetails {
   }
 }
 
+/// Delivery hub assigned when a business has multiple active hubs.
+class GeophraseHub {
+  /// Hub name shown in the Geophrase dashboard and rider app.
+  final String name;
+
+  /// Auto-generated hub code.
+  final String code;
+
+  /// Creates a [GeophraseHub].
+  GeophraseHub({required this.name, required this.code});
+
+  /// Builds a [GeophraseHub] from the nested `hub` object of `/business/resolve/`.
+  factory GeophraseHub.fromJson(Map<String, dynamic> json) {
+    return GeophraseHub(
+      name: json['name'] as String,
+      code: json['code'] as String,
+    );
+  }
+}
+
 /// Fully-resolved address returned in client mode.
 /// Field names mirror the Geophrase REST API response shape.
 ///
-/// All fields are always present. [orderId] is an empty string when no
-/// `orderId` was passed to [GeophraseConnect]. Inside [address], `landmark`
-/// and `addressLineTwo` may be empty strings. No field is ever `null`.
+/// All standard address fields are always present. [orderId] is an empty string
+/// when no `orderId` was passed to [GeophraseConnect]. Inside [address], `landmark`
+/// and `addressLineTwo` may be empty strings. [hub] is non-null when the business
+/// has more than one active delivery hub. No other field is ever `null`.
 class GeophraseAddress {
   /// Short alphanumeric code identifying the captured address.
   final String shortCode;
@@ -99,6 +120,9 @@ class GeophraseAddress {
   /// string when no `orderId` was passed.
   final String orderId;
 
+  /// Assigned delivery hub when the business has multiple active hubs.
+  final GeophraseHub? hub;
+
   /// Structured address fields (city, state, coordinates, etc.).
   final GeophraseAddressDetails address;
 
@@ -114,6 +138,7 @@ class GeophraseAddress {
     required this.qrCode,
     required this.capturedAt,
     required this.orderId,
+    this.hub,
     required this.address,
     required this.rawData,
   });
@@ -121,12 +146,14 @@ class GeophraseAddress {
   /// Builds a [GeophraseAddress] from the JSON response of the Geophrase
   /// `/business/resolve/` endpoint.
   factory GeophraseAddress.fromJson(Map<String, dynamic> json) {
+    final rawHub = json['hub'];
     return GeophraseAddress(
       shortCode: json['short_code'] as String,
       shortLink: json['short_link'] as String,
       qrCode: json['qr_code'] as String,
       capturedAt: (json['captured_at'] as num).toInt(),
       orderId: json['order_id'] as String,
+      hub: rawHub is Map<String, dynamic> ? GeophraseHub.fromJson(rawHub) : null,
       address: GeophraseAddressDetails.fromJson(
         json['address'] as Map<String, dynamic>,
       ),
@@ -171,4 +198,21 @@ class GeophraseEndpoints {
 
   /// Creates a [GeophraseEndpoints] override.
   const GeophraseEndpoints({this.widgetOrigin, this.apiBase});
+}
+
+String extractGeophraseApiErrorMessage(Map<String, dynamic> errorData, int statusCode) {
+  final fallback = 'Geophrase API error ($statusCode)';
+  final direct = errorData['message'] ?? errorData['detail'];
+  if (direct is String && direct.isNotEmpty) {
+    return direct;
+  }
+  for (final value in errorData.values) {
+    if (value is List && value.isNotEmpty && value.first is String) {
+      return value.first as String;
+    }
+    if (value is String && value.isNotEmpty) {
+      return value;
+    }
+  }
+  return fallback;
 }

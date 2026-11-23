@@ -105,6 +105,7 @@ ElevatedButton(
 | `apiKey` | `String` | — | **Conditional** | Your secret [Geophrase API key](https://geophrase.com/docs/api-keys) (the full key string). Required when `mode: 'client'`. |
 | `theme` | `String` | `'system'` | No | `'light'`, `'dark'`, or `'system'` (follows OS preference). |
 | `orderId` | `String` | — | No | Your internal reference ID for this session. |
+| `hubCode` | `String` | None | **Conditional** | Delivery hub code (from Settings > Delivery hubs). Client mode only; required when `mode: 'client'` and your business has more than one active delivery hub. In server mode, send `hub_code` from your backend to the [resolve call](https://geophrase.com/docs/resolve-endpoint). |
 | `noteForAgent` | `String` | None | No | Note shown to your delivery agent, never to the customer. Client mode only; notes over 300 characters are cut. It is sent from the customer's device, so the customer can change it; send payment instructions, such as cash to collect, from your server or the dashboard. In server mode, send `note_for_agent` with your [resolve call](https://geophrase.com/docs/resolve-endpoint). |
 | `phone` | `String` | — | No | Pre-fills the phone field with a 10-digit Indian mobile number. |
 | `onSuccess` | `Function(dynamic)` | — | **Yes** | Receives a `GeophraseAddress` in client mode, or a `GeophraseRequestId` in server mode. |
@@ -126,6 +127,7 @@ ElevatedButton(
 | `qrCode` | `String` | URL to a QR code image encoding the short link. |
 | `capturedAt` | `int` | Capture timestamp as milliseconds since the Unix epoch. |
 | `orderId` | `String` | Merchant-supplied reference ID; empty string when `orderId` was not passed. |
+| `hub` | `GeophraseHub?` | Assigned delivery hub (`name`, `code`) when your business has more than one active delivery hub; otherwise `null`. |
 | `address` | `GeophraseAddressDetails` | Structured address fields (see below). |
 | `rawData` | `Map<String, dynamic>` | Unmodified API response. |
 
@@ -172,7 +174,7 @@ Example:
 }
 ```
 
-All fields are always present. `order_id` is an empty string when `orderId` was not passed. `landmark` and `address_line_two` may be empty strings. No field is ever `null`.
+All standard fields are always present. `order_id` is an empty string when `orderId` was not passed. `landmark` and `address_line_two` may be empty strings. `hub` (`{ name, code }`) is included only when your business has more than one active delivery hub. No other field is ever `null`.
 
 `rawData` holds the unmodified API response so you can read new fields before the SDK exposes them as typed getters.
 

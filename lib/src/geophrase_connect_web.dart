@@ -16,6 +16,7 @@ class GeophraseConnect extends StatefulWidget {
   final String mode;
   final String theme;
   final String? apiKey;
+  final String? hubCode;
   final String? orderId;
   final String? noteForAgent;
   final String? phone;
@@ -31,6 +32,7 @@ class GeophraseConnect extends StatefulWidget {
     this.theme = 'system',
     this.apiKey,
     required this.onSuccess,
+    this.hubCode,
     this.orderId,
     this.noteForAgent,
     this.phone,
@@ -156,6 +158,10 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
   Future<void> _handleRequestIdResolution(String requestId) async {
     try {
       final payload = <String, dynamic>{'request_id': requestId};
+      final trimmedHubCode = widget.hubCode?.trim();
+      if (trimmedHubCode != null && trimmedHubCode.isNotEmpty) {
+        payload['hub_code'] = trimmedHubCode;
+      }
       if (widget.orderId != null && widget.orderId!.isNotEmpty) {
         payload['order_id'] = widget.orderId!;
       }
@@ -184,7 +190,7 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
         _safeCall(widget.onError, GeophraseError(
           type: 'API_ERROR',
           status: response.statusCode,
-          message: errorData['message']?.toString() ?? 'Geophrase API error (${response.statusCode})',
+          message: extractGeophraseApiErrorMessage(errorData, response.statusCode),
         ));
         return;
       }

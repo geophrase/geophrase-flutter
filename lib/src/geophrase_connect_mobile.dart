@@ -27,6 +27,10 @@ class GeophraseConnect extends StatefulWidget {
   /// Required when [mode] is `'client'`. Omit in server mode.
   final String? apiKey;
 
+  /// Delivery hub code (from Settings > Delivery hubs). Client mode only;
+  /// required when [mode] is `'client'` and your business has more than one active hub.
+  final String? hubCode;
+
   /// Your internal reference ID; echoed back in the Geophrase dashboard.
   final String? orderId;
 
@@ -53,6 +57,7 @@ class GeophraseConnect extends StatefulWidget {
     this.theme = 'system',
     this.apiKey,
     required this.onSuccess,
+    this.hubCode,
     this.orderId,
     this.noteForAgent,
     this.phone,
@@ -278,6 +283,10 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
       }
 
       final payload = <String, dynamic>{'request_id': requestId};
+      final trimmedHubCode = widget.hubCode?.trim();
+      if (trimmedHubCode != null && trimmedHubCode.isNotEmpty) {
+        payload['hub_code'] = trimmedHubCode;
+      }
       if (widget.orderId != null && widget.orderId!.isNotEmpty) {
         payload['order_id'] = widget.orderId!;
       }
@@ -303,7 +312,7 @@ class _GeophraseConnectState extends State<GeophraseConnect> {
         _safeCall(widget.onError, GeophraseError(
           type: 'API_ERROR',
           status: response.statusCode,
-          message: errorData['message']?.toString() ?? 'Geophrase API error (${response.statusCode})',
+          message: extractGeophraseApiErrorMessage(errorData, response.statusCode),
         ));
         return;
       }
